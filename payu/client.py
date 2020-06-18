@@ -1,8 +1,6 @@
+import requests
 import hashlib
 import logging
-
-import requests
-
 from payu.enumerators import Language
 from payu.payments import Payment
 from payu.queries import Query
@@ -25,16 +23,14 @@ class Client(object):
     PROD_BASE = 'https://api.payulatam.com'
 
     def __init__(self, api_login, api_key, merchant_id, account_id, language=Language.ENGLISH,
-                 payments_api_version='4.0', recurring_api_version='4.9', reports_api_version='4.0', sandbox=False,
-                 test=False, debug=False):
+                 payments_api_version='4.0', recurring_api_version='4.9', reports_api_version='4.0', 
+                 sandbox=False, test=False, debug=False):
         self.api_login = api_login
         self.api_key = api_key
         self.merchant_id = merchant_id
         self.account_id = account_id
 
-        if not isinstance(language, Language):
-            language = Language(language)
-        self.language = language
+        self.language = Language(language) if not isinstance(language, Language) else language
 
         self.payments_api_version = payments_api_version
         self.recurring_api_version = recurring_api_version

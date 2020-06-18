@@ -1,6 +1,6 @@
 # payu-python
 
-payu-python is an API wrapper for Payu written in Python. Currently only works for supported credit cards in the supported countries in Latam.
+payu-python is an API wrapper for PayU written in Python. Currently only works for supported credit cards in the supported countries in Latam.
 
 Supported countries:
 * Argentina
@@ -11,9 +11,9 @@ Supported countries:
 * Panama
 * Peru
 
-Read [Utils](https://github.com/GearPlug/payu-python#utils) section to find out how to get the supported credit cards for a country.
+Read [Utils](https://github.com/dnarvaez27/payu-python#utils) section to find out how to get the supported credit cards for a country.
 
-Read [TODO](https://github.com/GearPlug/payu-python#todo) section to find out what's missing in this library.
+Read [TODO](https://github.com/dnarvaez27/payu-python#todo) section to find out what's missing in this library.
 
 
 ## Installing
@@ -25,7 +25,7 @@ pip install payu-python
 
 If you are going to use this with your Django application, we recommend you to use our django implementation:
 
-[django-payu-latam](https://github.com/GearPlug/django-payu-latam)
+[django-payu-latam](https://github.com/dnarvaez27/django-payu-latam)
 
 ## Usage
 
@@ -99,7 +99,9 @@ r = client.payments.ping()
 r = client.payments.get_payments_methods()
 ```
 
-#### Make a payment (AUTHORIZATION AND CAPTURE)
+#### Card
+
+##### Make a payment (AUTHORIZATION AND CAPTURE)
 ```
 r = client.payments.make_payment(reference_code='TestPayU01', description='Test Payment', tx_value=1000, tx_tax=0, 
                                  tx_tax_return_base=0, currency='COP', buyer=BUYER_EXAMPLE, payer=PAYER_EXAMPLE, 
@@ -111,7 +113,7 @@ r = client.payments.make_payment(reference_code='TestPayU01', description='Test 
                                  notify_url='https://ed60769e.ngrok.io/payu/notification/')
 ```
 
-#### Make authorization (ONLY AUTHORIZATION)
+##### Make authorization (ONLY AUTHORIZATION)
 ```
 r = client.payments.make_authorization(reference_code='TestPayU02', description='Test Payment', tx_value=1000, tx_tax=0, 
                                        tx_tax_return_base=0, currency='COP', buyer=BUYER_EXAMPLE, payer=PAYER_EXAMPLE, 
@@ -123,16 +125,39 @@ r = client.payments.make_authorization(reference_code='TestPayU02', description=
                                        notify_url='https://ed60769e.ngrok.io/payu/notification/')
 ```
 
-#### Make capture (ONLY CAPTURE)
+##### Make capture (ONLY CAPTURE)
 ```
 r = client.payments.make_capture(order_id='844928300', parent_transaction_id='4d7f240d-084a-426f-aa27-42c3b2a2b265')
 ```
 
-#### Refund a payment
+##### Refund a payment
 ```
 r = client.payments.refund_payment(order_id='844928300', parent_transaction_id='4d7f240d-084a-426f-aa27-42c3b2a2b265',
                                    reason='Client asked for refund.')
 ```
+
+### Cash
+```
+r = client.payments.cash(self, reference_code='Payment1', description='Test Cash Payment', 
+                         tx_value=12000, tx_tax=1915.97, tx_tax_return_base=10084.03, currency='COP, 
+                         buyer=BUYER_EXAMPLE,expiration_date, payment_method='Efecty', payment_country='CO', 
+                         ip_address='127.0.0.1', notify_url='http://mycallback.com/payu')
+```
+
+### Bank Transfer
+#### List Banks
+```
+bank_list = list_banks(self, payment_method='PSE', payment_country='CO')
+```
+
+#### Make Payment
+```
+r = client.payments.cash(self, reference_code='Payment1', description='Test Cash Payment', 
+                        tx_value=12000, tx_tax=1915.97, tx_tax_return_base=10084.03, currency='COP, 
+                        buyer=BUYER_EXAMPLE,expiration_date, payment_method='Efecty', payment_country='CO', 
+                        ip_address='127.0.0.1', notify_url='http://mycallback.com/payu')
+```
+
 
 ### Tokenization Module
 
@@ -383,10 +408,10 @@ Countries that does not need CVV for tokenized payments.
 ## Contributing
 We are always grateful for any kind of contribution including but not limited to bug reports, code enhancements, bug fixes, and even functionality suggestions.
 
-#### You can report any bug you find or suggest new functionality with a new [issue](https://github.com/GearPlug/payu-python/issues).
+#### You can report any bug you find or suggest new functionality with a new [issue](https://github.com/dnarvaez27/payu-python/issues).
 
 #### If you want to add yourself some functionality to the wrapper:
-1. Fork it ( https://github.com/GearPlug/payu-python )
+1. Fork it ( https://github.com/dnarvaez27/payu-python )
 2. Create your feature branch (git checkout -b my-new-feature)
 3. Commit your changes (git commit -am 'Adds my new feature')
 4. Push to the branch (git push origin my-new-feature)

@@ -1,6 +1,6 @@
-from payu.enumerators import Country, Currency, Franchise, PaymentCommand, TransactionType
-from payu.exceptions import CVVRequiredError
-from payu.utils import get_available_franchise_for_payment
+from payu.enumerators import Country, Currency, Franchise, PaymentCommand, TransactionType, BankTransfer
+from payu.exceptions import CVVRequiredError, FranchiseUnavailableError
+from payu.utils import get_available_franchise_for_payment, parse_date, get_available_cash_options, get_available_bank_transfer
 
 
 class Payment(object):
@@ -21,6 +21,7 @@ class Payment(object):
         }
         return self.client._post(self.url, json=payload)
 
+    # Cards
     def get_payments_methods(self):
         payload = {
             "test": self.client.is_test,
@@ -33,7 +34,7 @@ class Payment(object):
         }
         return self.client._post(self.url, json=payload)
 
-    def make_payment(self, *, reference_code, description, tx_value, tx_tax, tx_tax_return_base, currency, buyer,
+    def make_payment(self, reference_code, description, tx_value, tx_tax, tx_tax_return_base, currency, buyer,
                      payer, credit_card, payment_method, payment_country, device_session_id, ip_address, cookie,
                      user_agent, language=None, shipping_address=None, extra_parameters=None, notify_url=None,
                      transaction_type=TransactionType.AUTHORIZATION_AND_CAPTURE):
@@ -188,6 +189,7 @@ class Payment(object):
         payload = {
             "language": self.client.language.value,
             "command": PaymentCommand.SUBMIT_TRANSACTION.value,
+            "test": self.client.is_test,
             "merchant": {
                 "apiKey": self.client.api_key,
                 "apiLogin": self.client.api_login
@@ -198,8 +200,10 @@ class Payment(object):
                     "referenceCode": reference_code,
                     "description": description,
                     "language": language or self.client.language.value,
-                    "signature": self.client._get_signature(reference_code, tx_value, currency.value),
                     "notifyUrl": notify_url,
+                    "signature": self.client._get_signature(reference_code, tx_value, currency.value),
+                    "shippingAddress": shipping_address,
+                    "buyer": buyer,
                     "additionalValues": {
                         "TX_VALUE": {
                             "value": tx_value,
@@ -214,11 +218,9 @@ class Payment(object):
                             "currency": currency.value
                         }
                     },
-                    "buyer": buyer,
-                    "shippingAddress": shipping_address
                 },
-                "payer": payer,
                 "creditCard": credit_card,
+                "payer": payer,
                 "extraParameters": extra_parameters,
                 "type": transaction_type.value,
                 "paymentMethod": payment_method.value,
@@ -228,7 +230,6 @@ class Payment(object):
                 "cookie": cookie,
                 "userAgent": user_agent
             },
-            "test": self.client.is_test
         }
         return self.client._post(self.url, json=payload)
 
@@ -236,7 +237,7 @@ class Payment(object):
         kwargs['transaction_type'] = TransactionType.AUTHORIZATION
         return self.make_payment(**kwargs)
 
-    def make_capture(self, *, order_id, parent_transaction_id):
+    def make_capture(self, order_id, parent_transaction_id):
         payload = {
             "language": self.client.language.value,
             "command": PaymentCommand.SUBMIT_TRANSACTION.value,
@@ -264,7 +265,7 @@ class Payment(object):
         """
         raise NotImplementedError
 
-    def refund_payment(self, *, order_id, parent_transaction_id, reason):
+    def refund_payment(self, order_id, parent_transaction_id, reason):
         payload = {
             "language": self.client.language.value,
             "command": PaymentCommand.SUBMIT_TRANSACTION.value,
@@ -281,5 +282,130 @@ class Payment(object):
                 "reason": reason
             },
             "test": self.client.is_test
+        }
+        return self.client._post(self.url, json=payload)
+
+    # PSE
+    def list_banks(self, payment_method, payment_country):
+        available_payment_method = get_available_bank_transfer(payment_country)
+        if payment_method not in available_payment_method:
+            raise FranchiseUnavailableError(f'{payment_method} is not available in {payment_country}')
+
+        payload = {
+            "language": self.client.language.value,
+            "command": "GET_BANKS_LIST",
+            "merchant": {
+                "apiKey": self.client.api_key,
+                "apiLogin": self.client.api_login
+            },
+            "test": self.client.is_test,
+            "bankListInformation": {
+                "paymentMethod": payment_method.value,
+                "paymentCountry": payment_country.value
+            }
+        }
+        return self.client._post(self.url, json=payload)
+
+    def pse(self, bank_code, reference_code, description, tx_value, tx_tax, tx_tax_return_base, currency, buyer,
+            payer, ip_address, cookie, user_agent, language=None, extra_parameters=None, notify_url=None,
+            transaction_type=TransactionType.AUTHORIZATION_AND_CAPTURE):
+        payload = {
+            "language": self.client.language.value,
+            "command": PaymentCommand.SUBMIT_TRANSACTION.value,
+            "test": self.client.is_test,
+            "merchant": {
+                "apiKey": self.client.api_key,
+                "apiLogin": self.client.api_login
+            },
+            "transaction": {
+                "order": {
+                    "accountId": self.client.account_id,
+                    "referenceCode": reference_code,
+                    "description": description,
+                    "language": language or self.client.language.value,
+                    "signature": self.client._get_signature(reference_code, tx_value, currency.value),
+                    "notifyUrl": notify_url,
+                    "additionalValues": {
+                        "TX_VALUE": {
+                            "value": tx_value,
+                            "currency": currency.value
+                        },
+                        "TX_TAX": {
+                            "value": tx_tax,
+                            "currency": currency.value
+                        },
+                        "TX_TAX_RETURN_BASE": {
+                            "value": tx_tax_return_base,
+                            "currency": currency.value
+                        }
+                    },
+                    "buyer": buyer
+                },
+                "payer": payer,
+                "extraParameters": {
+                    "RESPONSE_URL": notify_url,
+                    "PSE_REFERENCE1": ip_address,
+                    "FINANCIAL_INSTITUTION_CODE": bank_code,
+                    "USER_TYPE": payer['userType'],
+                    "PSE_REFERENCE2": payer['dniType'],
+                    "PSE_REFERENCE3": payer['dniNumber']
+                },
+                "type": transaction_type.value,
+                "paymentMethod": Franchise.PSE,
+                "paymentCountry": Country.COLOMBIA,
+                "ipAddress": ip_address,
+                "cookie": cookie,
+                "userAgent": user_agent
+            }
+        }
+        return self.client._post(self.url, json=payload)
+
+    # Cash
+    def cash(self, reference_code, description, tx_value, tx_tax, tx_tax_return_base, currency, buyer,
+             expiration_date, payment_method, payment_country, ip_address, language=None, notify_url=None,
+             transaction_type=TransactionType.AUTHORIZATION_AND_CAPTURE):
+
+        cash_franchises = get_available_cash_options(payment_country)
+        if payment_method not in cash_franchises:
+            raise FranchiseUnavailableError(f'{payment_method} is not available in {payment_country}')
+
+        payload = {
+            "language": self.client.language.value,
+            "command": PaymentCommand.SUBMIT_TRANSACTION.value,
+            "test": self.client.is_test,
+            "merchant": {
+                "apiKey": self.client.api_key,
+                "apiLogin": self.client.api_login
+            },
+            "transaction": {
+                "order": {
+                    "accountId": self.client.account_id,
+                    "referenceCode": reference_code,
+                    "description": description,
+                    "language": language or self.client.language.value,
+                    "signature": self.client._get_signature(reference_code, tx_value, currency.value),
+                    "notifyUrl": notify_url,
+                    "buyer": buyer,
+                    "additionalValues": {
+                        "TX_VALUE": {
+                            "value": tx_value,
+                            "currency": currency.value
+                        },
+                        "TX_TAX": {
+                            "value": tx_tax,
+                            "currency": currency.value
+                        },
+                        "TX_TAX_RETURN_BASE": {
+                            "value": tx_tax_return_base,
+                            "currency": currency.value
+                        }
+                    },
+                },
+                "type": transaction_type.value,
+                "paymentMethod": payment_method.value,
+                "expirationDate": parse_date(expiration_date),
+                "paymentCountry": payment_country.value,
+                "ipAddress": ip_address
+            },
         }
         return self.client._post(self.url, json=payload)

@@ -1,4 +1,4 @@
-from payu.enumerators import Country, Franchise as F, TransactionType as T
+from payu.enumerators import Country, Franchise as F, TransactionType as T, CashOption as CO, BankTransfer as BT
 from payu.exceptions import InvalidCountryError
 
 
@@ -29,7 +29,7 @@ def get_available_franchise_for_payment(country, transaction_type):
         else:
             return F.VISA, F.MASTERCARD, F.AMEX, F.DINERS, F.CODENSA, F.VISA_DEBIT
     elif country == Country.MEXICO:
-        # Nota de Ingeniero de Payu:
+        # Nota de Ingeniero de PayU:
         # Puede procesar en 2 pasos VISA y MASTERCARD
         # Puede procesar en 1 VISA, MASTERCARD y AMEX
         if transaction_type in (T.AUTHORIZATION, T.CAPTURE):
@@ -42,7 +42,7 @@ def get_available_franchise_for_payment(country, transaction_type):
         else:
             return F.VISA, F.MASTERCARD
     elif country == Country.PERU:
-        # Nota de Ingeniero de Payu:
+        # Nota de Ingeniero de PayU:
         # Puede procesar en 2 pasos MASTERCARD, DINERS, AMEX y VISA DEBIT
         # Puede procesar en 1 paso MASTERCARD VISA DEBIT y DEBIT
         if transaction_type in (T.AUTHORIZATION, T.CAPTURE):
@@ -54,6 +54,28 @@ def get_available_franchise_for_payment(country, transaction_type):
             return None
         else:
             return F.VISA, F.MASTERCARD, F.AMEX, F.DINERS
+    else:
+        raise InvalidCountryError
+
+
+def get_available_cash_options(country):
+    if country == Country.COLOMBIA:
+        return CO.BALOTO, CO.EFECTY,
+    elif country == Country.ARGENTINA:
+        return CO.PAGOFACIL, CO.RAPIPAGO, CO.COBRO_EXPRESS, CO.BAPRO, CO.RIPSA
+    elif country == Country.BRAZIL:
+        return (CO.BOLETO_BANCARIO,)
+    elif country == Country.MEXICO:
+        return CO.OXXO, CO.BANK_REFERENCED, CO.SEVEN_ELEVEN, CO.OTHERS_CASH_MX,
+    elif country == Country.PERU:
+        return CO.BCP, CO.PAGOEFECTIVO,
+    else:
+        raise InvalidCountryError
+
+
+def get_available_bank_transfer(country):
+    if country == Country.COLOMBIA:
+        return (BT.PSE, )
     else:
         raise InvalidCountryError
 
@@ -70,7 +92,7 @@ def get_available_franchise_for_tokenization(country, transaction_type):
 
     """
     if country == Country.ARGENTINA:
-        # Nota de Ingeniero de Payu:
+        # Nota de Ingeniero de PayU:
         # Puede procesar en 2 pasos TODAS sin CVV excepto VISA
         # Puede procesar en 1 paso TODAS sin CVV excepto VISA
         if transaction_type in (T.AUTHORIZATION, T.CAPTURE):
@@ -78,7 +100,7 @@ def get_available_franchise_for_tokenization(country, transaction_type):
         else:
             return F.VISA, F.MASTERCARD, F.AMEX, F.SHOPPING, F.CABAL, F.ARGENCARD, F.CENCOSUD, F.NARANJA
     elif country == Country.BRAZIL:
-        # Nota de Ingeniero de Payu:
+        # Nota de Ingeniero de PayU:
         # Puede procesar en 2 pasos TODAS sin CVV
         # Puede procesar en 1 paso TODAS sin CVV
         if transaction_type in (T.AUTHORIZATION, T.CAPTURE):
@@ -91,7 +113,7 @@ def get_available_franchise_for_tokenization(country, transaction_type):
         else:
             return F.VISA, F.MASTERCARD, F.AMEX, F.DINERS
     elif country == Country.MEXICO:
-        # Nota de Ingeniero de Payu:
+        # Nota de Ingeniero de PayU:
         # Puede procesar en 2 pasos TODAS sin CVV excepto AMEX
         # Puede procesar en 1 paso TODAS sin CVV excepto AMEX
         if transaction_type in (T.AUTHORIZATION, T.CAPTURE):
@@ -104,7 +126,7 @@ def get_available_franchise_for_tokenization(country, transaction_type):
         else:
             return F.VISA, F.MASTERCARD
     elif country == Country.PERU:
-        # Nota de Ingeniero de Payu:
+        # Nota de Ingeniero de PayU:
         # Puede procesar en 2 pasos TODAS sin CVV
         # Puede procesar en 1 paso TODAS sin CVV
         if transaction_type in (T.AUTHORIZATION, T.CAPTURE):
@@ -138,27 +160,31 @@ def has_franchise_cvv_tokenization(franchise, country, transaction_type):
         if transaction_type == T.AUTHORIZATION_AND_CAPTURE and franchise in franchise_list:
             return True
     elif country == Country.BRAZIL:
-        # Nota de Ingeniero de Payu:
+        # Nota de Ingeniero de PayU:
         # Puede procesar todas sin CVV
         return False
     elif country == Country.COLOMBIA:
-        # Nota de Ingeniero de Payu:
+        # Nota de Ingeniero de PayU:
         # Puede procesar todas sin CVV
         return False
     elif country == Country.CHILE:
-        # Nota de Ingeniero de Payu:
+        # Nota de Ingeniero de PayU:
         # No puede procesar ninguna sin CVV
         return True
     elif country == Country.MEXICO:
         if transaction_type == T.AUTHORIZATION_AND_CAPTURE and franchise in (F.AMEX,):
             return True
     elif country == Country.PANAMA:
-        # Nota de Ingeniero de Payu:
+        # Nota de Ingeniero de PayU:
         # No puede procesar ninguna sin CVV
         return True
     elif country == Country.PERU:
-        # Nota de Ingeniero de Payu:
+        # Nota de Ingeniero de PayU:
         # Puede procesar todas sin CVV
         return False
     else:
         raise InvalidCountryError
+
+
+def parse_date(date):
+    return date.isoformat()

@@ -1,5 +1,4 @@
 import os
-
 from setuptools import setup
 
 
@@ -8,12 +7,12 @@ def read(fname):
 
 
 setup(name='payu-python',
-      version='0.1.5',
-      description='API wrapper for Payu written in Python',
+      version='0.1.6',
+      description='API wrapper for PayU written in Python',
       long_description=read('README.md'),
-      url='https://github.com/GearPlug/payu-python',
-      author='Miguel Ferrer',
-      author_email='ingferrermiguel@gmail.com',
+      url='https://github.com/dnarvaez27/payu-python',
+      author='David Narvaez',
+      author_email='dnarvaez27@outlook.com',
       license='MIT',
       packages=['payu'],
       install_requires=[

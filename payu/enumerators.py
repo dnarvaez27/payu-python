@@ -44,6 +44,36 @@ class Franchise(Enum):
     MASTERCARD_DEBIT = 'MASTERCARD'
 
 
+class BankTransfer(Enum):
+    PSE = 'PSE'
+
+
+class CashOption(Enum):
+    # COL
+    BALOTO = 'BALOTO'
+    EFECTY = 'EFECTY'
+
+    # ARG
+    PAGOFACIL = 'PAGOFACIL'
+    RAPIPAGO = 'RAPIPAGO'
+    COBRO_EXPRESS = 'COBRO_EXPRESS'
+    BAPRO = 'BAPRO'
+    RIPSA = 'RIPSA'
+
+    # BRA
+    BOLETO_BANCARIO = 'BOLETO_BANCARIO'
+
+    # MEX
+    OXXO = 'OXXO'
+    BANK_REFERENCED = 'BANK_REFERENCED'
+    SEVEN_ELEVEN = 'SEVEN_ELEVEN'
+    OTHERS_CASH_MX = 'OTHERS_CASH_MX'
+
+    # PER
+    BCP = 'BCP'
+    PAGOEFECTIVO = 'PAGOEFECTIVO'
+
+
 class DocumentType(Enum):
     CITIZENSHIP_CARD = 'CC'
     FOREIGN_CITIZENSHIP_CARD = 'CE'
